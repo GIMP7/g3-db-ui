@@ -8,7 +8,11 @@ import com.vaadin.flow.component.avatar.AvatarVariant;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.SvgIcon;
-import com.vaadin.flow.component.orderedlayout.*;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.Scroller;
+import com.vaadin.flow.component.orderedlayout.ScrollerVariant;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.Layout;
@@ -24,12 +28,11 @@ public final class MainLayout extends AppLayout {
     }
 
     private Component createApplicationHeader() {
-        // TODO Replace with real application logo and name
-        var appLogo = new Avatar("My Application");
+        var appLogo = new Avatar("BIR");
         appLogo.addClassName("app-logo");
         appLogo.addThemeVariants(AvatarVariant.AURA_FILLED, AvatarVariant.XSMALL);
 
-        var appName = new Span("My Application");
+        var appName = new Span("BIR Form 1904");
         appName.addClassName("app-name");
 
         var header = new HorizontalLayout(appLogo, appName);
@@ -45,7 +48,7 @@ public final class MainLayout extends AppLayout {
     }
 
     private Component createApplicationFooter() {
-        var footer = new VerticalLayout(new Span("Made with ❤️ with Vaadin"));
+        var footer = new VerticalLayout(new Span("Schema explorer built with Vaadin"));
         footer.setAlignItems(FlexComponent.Alignment.CENTER);
         footer.addClassName("app-footer");
         return footer;

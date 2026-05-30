@@ -1,29 +1,154 @@
-/* Add your styles here */
+/* ------------------------------------------------------------------ */
+/* Shared layout and card styles for BIR Form 1904                     */
+/* ------------------------------------------------------------------ */
 
-.app-logo {
-    border-radius: min(40%, var(--vaadin-radius-m));
-    margin-inline-start: var(--vaadin-padding-inline-container);
+.task-list-view {
+    gap: var(--vaadin-space-l);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--vaadin-primary-color) 14%, transparent), transparent 34%),
+        linear-gradient(180deg, color-mix(in srgb, var(--vaadin-background-color) 94%, white), var(--vaadin-background-color));
 }
 
-.app-name {
-    font-weight: var(--aura-font-weight-semibold);
+.task-hero {
+    gap: var(--vaadin-space-xs);
+}
+
+.task-hero span {
+    color: var(--vaadin-text-color-secondary);
+    max-width: 50rem;
+}
+
+.task-card {
+    border: 1px solid var(--vaadin-contrast-10pct);
+    border-radius: var(--vaadin-border-radius-l);
+    background: color-mix(in srgb, var(--vaadin-background-color) 90%, white);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    gap: var(--vaadin-space-m);
+}
+
+.task-card h2 {
+    margin: 0;
     font-size: var(--aura-font-size-l);
 }
 
-.app-footer {
-    color: var(--vaadin-text-color-secondary);
-    font-size: var(--aura-font-size-s);
+/* ------------------------------------------------------------------ */
+/* Dashboard + CRUD views                                               */
+/* ------------------------------------------------------------------ */
+
+.dashboard-view,
+.crud-view {
+    gap: var(--vaadin-space-l);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--vaadin-primary-color) 14%, transparent), transparent 28%),
+        linear-gradient(180deg, color-mix(in srgb, var(--vaadin-background-color) 95%, white), var(--vaadin-background-color));
 }
 
-/* TODO: This is only for demo purposes. You can delete it. */
-vaadin-side-nav:has(vaadin-side-nav-item:only-child)::after {
-    display: block;
-    content: "More menu items will appear here when you add more views.";
-    font-size: var(--aura-font-size-s);
+.dashboard-hero,
+.schema-hero {
+    gap: var(--vaadin-space-xs);
+}
+
+.dashboard-hero p,
+.schema-hero p {
     color: var(--vaadin-text-color-secondary);
-    box-sizing: border-box;
-    padding: 1em;
-    max-width: 14em;
-    min-width: 100%;
-    white-space: normal;
+    max-width: 56rem;
+}
+
+.dashboard-stats,
+.schema-stats {
+    gap: var(--vaadin-space-s);
+}
+
+/* ------------------------------------------------------------------ */
+/* Cards                                                                */
+/* ------------------------------------------------------------------ */
+
+.crud-card,
+.stat-card,
+.table-card,
+.task-card {
+    border: 1px solid var(--vaadin-contrast-10pct);
+    border-radius: var(--vaadin-border-radius-l);
+    background: color-mix(in srgb, var(--vaadin-background-color) 90%, white);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+.crud-card,
+.table-card,
+.task-card {
+    gap: var(--vaadin-space-m);
+}
+
+.crud-card h2,
+.crud-card h3,
+.table-card h2,
+.task-card h2 {
+    margin: 0;
+    font-size: var(--aura-font-size-l);
+}
+
+.crud-card h3 {
+    font-size: var(--aura-font-size-m);
+}
+
+.crud-card p,
+.table-card > div > span,
+.task-card p {
+    color: var(--vaadin-text-color-secondary);
+}
+
+.crud-card p {
+    margin: 0;
+}
+
+.crud-link-button {
+    min-width: 8.5rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* Stat cards                                                           */
+/* ------------------------------------------------------------------ */
+
+.stat-card {
+    min-width: 11rem;
+    gap: 0.2rem;
+}
+
+.stat-card span:first-child {
+    font-size: 2rem;
+    font-weight: var(--aura-font-weight-semibold);
+}
+
+.stat-card span:last-child {
+    color: var(--vaadin-text-color-secondary);
+}
+
+/* ------------------------------------------------------------------ */
+/* Table / schema description cards                                     */
+/* ------------------------------------------------------------------ */
+
+.table-details {
+    gap: var(--vaadin-space-s);
+}
+
+.table-box {
+    gap: var(--vaadin-space-xs);
+}
+
+.table-box > span {
+    font-weight: var(--aura-font-weight-semibold);
+}
+
+.table-list {
+    margin: 0;
+    padding-inline-start: 1.2rem;
+    color: var(--vaadin-text-color-secondary);
+}
+
+/* ------------------------------------------------------------------ */
+/* Task card paragraphs                                                 */
+/* ------------------------------------------------------------------ */
+
+.task-card p {
+    margin: 0;
 }

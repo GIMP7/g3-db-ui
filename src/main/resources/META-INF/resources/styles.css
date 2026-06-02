@@ -2,6 +2,14 @@
 /* Shared layout and card styles for BIR Form 1904                     */
 /* ------------------------------------------------------------------ */
 
+.app-footer {
+    gap: var(--vaadin-space-xs);
+}
+
+.theme-toggle {
+    width: 100%;
+}
+
 .task-list-view {
     gap: var(--vaadin-space-l);
     background:
@@ -71,6 +79,14 @@
     border-radius: var(--vaadin-border-radius-l);
     background: color-mix(in srgb, var(--vaadin-background-color) 90%, white);
     box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+html[theme~="dark"] .crud-card,
+html[theme~="dark"] .stat-card,
+html[theme~="dark"] .table-card,
+html[theme~="dark"] .task-card {
+    background: color-mix(in srgb, var(--vaadin-background-color) 82%, white);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
 }
 
 .crud-card,
@@ -151,4 +167,122 @@
 
 .task-card p {
     margin: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Dark mode                                                           */
+/* ------------------------------------------------------------------ */
+
+html.dark-mode {
+    color-scheme: dark;
+    --vaadin-background-color: #0f172a;
+    --vaadin-text-color: #f8fafc;
+    --vaadin-text-color-secondary: #cbd5e1;
+    --vaadin-contrast-5pct: rgba(148, 163, 184, 0.12);
+    --vaadin-contrast-10pct: rgba(148, 163, 184, 0.24);
+    --vaadin-contrast-20pct: rgba(148, 163, 184, 0.34);
+    --vaadin-primary-color: #38bdf8;
+    background: #0f172a;
+    color: #f8fafc;
+}
+
+html.dark-mode body,
+html.dark-mode vaadin-app-layout {
+    background: #0f172a;
+    color: #f8fafc;
+}
+
+html.dark-mode vaadin-app-layout::part(drawer) {
+    background: #111827;
+    border-inline-end: 1px solid rgba(148, 163, 184, 0.22);
+    color: #f8fafc;
+}
+
+html.dark-mode .dashboard-view,
+html.dark-mode .crud-view,
+html.dark-mode .task-list-view {
+    background:
+        radial-gradient(circle at top right, rgba(56, 189, 248, 0.14), transparent 32%),
+        linear-gradient(180deg, #0f172a, #111827);
+    color: #f8fafc;
+}
+
+html.dark-mode .crud-card,
+html.dark-mode .stat-card,
+html.dark-mode .table-card,
+html.dark-mode .task-card {
+    background: #172033;
+    border-color: rgba(148, 163, 184, 0.24);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.36);
+    color: #f8fafc;
+}
+
+html.dark-mode .dashboard-hero p,
+html.dark-mode .schema-hero p,
+html.dark-mode .crud-card p,
+html.dark-mode .table-card > div > span,
+html.dark-mode .task-card p,
+html.dark-mode .stat-card span:last-child,
+html.dark-mode .table-list {
+    color: #cbd5e1;
+}
+
+html.dark-mode vaadin-side-nav-item::part(content),
+html.dark-mode vaadin-side-nav-item::part(link) {
+    color: #e2e8f0;
+}
+
+html.dark-mode vaadin-button {
+    color: #f8fafc;
+}
+
+html.dark-mode vaadin-button::part(label) {
+    color: inherit;
+}
+
+html.dark-mode vaadin-text-field::part(input-field),
+html.dark-mode vaadin-email-field::part(input-field),
+html.dark-mode vaadin-combo-box::part(input-field),
+html.dark-mode vaadin-date-picker::part(input-field) {
+    background: #0f172a;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    color: #f8fafc;
+}
+
+html.dark-mode vaadin-text-field,
+html.dark-mode vaadin-email-field,
+html.dark-mode vaadin-combo-box,
+html.dark-mode vaadin-date-picker {
+    color: #f8fafc;
+}
+
+html.dark-mode vaadin-grid {
+    background: #111827;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    color: #f8fafc;
+}
+
+html.dark-mode vaadin-grid::part(header-cell),
+html.dark-mode vaadin-grid::part(body-cell),
+html.dark-mode vaadin-grid::part(cell) {
+    background: #111827;
+    border-color: rgba(148, 163, 184, 0.18);
+    color: #f8fafc;
+}
+
+html.dark-mode vaadin-grid::part(odd-row-cell) {
+    background: #162033;
+}
+
+html.dark-mode vaadin-grid::part(selected-row-cell),
+html.dark-mode vaadin-grid::part(focused-cell) {
+    background: rgba(56, 189, 248, 0.18);
+}
+
+html.dark-mode vaadin-notification-card,
+html.dark-mode vaadin-confirm-dialog-overlay::part(overlay),
+html.dark-mode vaadin-combo-box-overlay::part(overlay),
+html.dark-mode vaadin-date-picker-overlay::part(overlay) {
+    background: #172033;
+    color: #f8fafc;
 }

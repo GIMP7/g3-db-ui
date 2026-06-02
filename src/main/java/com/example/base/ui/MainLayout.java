@@ -5,9 +5,12 @@ import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.avatar.AvatarVariant;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.SvgIcon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.Scroller;
@@ -48,10 +51,54 @@ public final class MainLayout extends AppLayout {
     }
 
     private Component createApplicationFooter() {
-        var footer = new VerticalLayout(new Span("Schema explorer built with Vaadin"));
+        var footer = new VerticalLayout(createThemeToggle(), new Span("Schema explorer built with Vaadin"));
         footer.setAlignItems(FlexComponent.Alignment.CENTER);
         footer.addClassName("app-footer");
         return footer;
+    }
+
+    private Button createThemeToggle() {
+        var toggle = new Button("Dark mode", VaadinIcon.MOON.create());
+        toggle.addClassName("theme-toggle");
+        toggle.addThemeVariants(ButtonVariant.TERTIARY);
+        toggle.addAttachListener(event -> syncThemeToggle(toggle));
+        toggle.addClickListener(event -> toggle.getUI().ifPresent(ui -> ui.getPage()
+                .executeJs("""
+                        const root = document.documentElement;
+                        const dark = !root.classList.contains('dark-mode');
+                        if (dark) {
+                          root.setAttribute('theme', 'dark');
+                          root.classList.add('dark-mode');
+                          localStorage.setItem('theme', 'dark');
+                        } else {
+                          root.removeAttribute('theme');
+                          root.classList.remove('dark-mode');
+                          localStorage.removeItem('theme');
+                        }
+                        return dark;
+                        """)
+                .then(Boolean.class, dark -> updateThemeToggle(toggle, dark))));
+        return toggle;
+    }
+
+    private void syncThemeToggle(Button toggle) {
+        toggle.getUI().ifPresent(ui -> ui.getPage()
+                .executeJs("""
+                        const dark = localStorage.getItem('theme') === 'dark';
+                        if (dark) {
+                          document.documentElement.setAttribute('theme', 'dark');
+                          document.documentElement.classList.add('dark-mode');
+                        } else {
+                          document.documentElement.classList.remove('dark-mode');
+                        }
+                        return dark;
+                        """)
+                .then(Boolean.class, dark -> updateThemeToggle(toggle, dark)));
+    }
+
+    private void updateThemeToggle(Button toggle, boolean dark) {
+        toggle.setText(dark ? "Light mode" : "Dark mode");
+        toggle.setIcon(dark ? VaadinIcon.SUN_O.create() : VaadinIcon.MOON.create());
     }
 
     private SideNav createSideNav() {

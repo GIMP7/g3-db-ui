@@ -32,10 +32,14 @@ import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
+import java.util.regex.Pattern;
+
 @Route("registrations")
 @PageTitle("Registration Details")
 @Menu(order = 1, title = "Registrations")
 class RegistrationDetailsView extends VerticalLayout {
+
+    private static final Pattern REGISTRATION_ID_PATTERN = Pattern.compile("REG-(\\d{6})");
 
     private final RegistrationDetailsRepository repository;
     private final AgentInformationRepository agentInformationRepository;
@@ -137,7 +141,8 @@ class RegistrationDetailsView extends VerticalLayout {
         registrationId.setWidthFull();
         registrationId.setRequired(true);
         registrationId.setMaxLength(10);
-        registrationId.setHelperText("Max 10 characters");
+        registrationId.setReadOnly(true);
+        registrationId.setHelperText("Generated automatically");
 
         agentTin.setWidthFull();
         agentTin.setClearButtonVisible(true);
@@ -192,16 +197,33 @@ class RegistrationDetailsView extends VerticalLayout {
     }
 
     private void edit(RegistrationDetails entity) {
-        current = entity == null ? new RegistrationDetails() : entity;
+        var next = entity == null ? new RegistrationDetails() : entity;
+        boolean isExisting = next.getRegistrationId() != null && !next.getRegistrationId().isBlank()
+                && repository.existsById(next.getRegistrationId());
+
+        if (!isExisting && (next.getRegistrationId() == null || next.getRegistrationId().isBlank())) {
+            next.setRegistrationId(generateNextRegistrationId());
+        }
+
+        current = next;
         binder.setBean(current);
         clearValidationState();
         refreshAgentOptions();
 
-        boolean isExisting = current.getRegistrationId() != null && !current.getRegistrationId().isBlank()
-                && repository.existsById(current.getRegistrationId());
-        registrationId.setReadOnly(isExisting);
         deleteButton.setEnabled(isExisting);
         saveButton.setText(isExisting ? "Update" : "Create");
+    }
+
+    private String generateNextRegistrationId() {
+        int nextNumber = repository.findAll().stream()
+                .map(RegistrationDetails::getRegistrationId)
+                .filter(id -> id != null)
+                .map(REGISTRATION_ID_PATTERN::matcher)
+                .filter(matcher -> matcher.matches())
+                .mapToInt(matcher -> Integer.parseInt(matcher.group(1)))
+                .max()
+                .orElse(0) + 1;
+        return "REG-%06d".formatted(nextNumber);
     }
 
     private void clearValidationState() {

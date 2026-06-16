@@ -29,11 +29,14 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.validator.EmailValidator;
 import com.vaadin.flow.data.validator.StringLengthValidator;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.stream.Stream;
 
 @Route("agents")
 @PageTitle("Agent Information")
@@ -47,6 +50,7 @@ class AgentInformationView extends VerticalLayout {
     private final Grid<AgentInformation> grid = new Grid<>(AgentInformation.class, false);
     private final Binder<AgentInformation> binder = new Binder<>(AgentInformation.class);
 
+    private final TextField searchField = new TextField();
     private final TextField agentTin = new TextField("Agent TIN");
     private final TextField agentName = new TextField("Agent Name");
     private final TextField agentRdo = new TextField("RDO Code");
@@ -74,6 +78,7 @@ class AgentInformationView extends VerticalLayout {
 
         configureFields();
         configureBindings();
+        configureSearch();
 
         var header = new VerticalLayout();
         header.setPadding(false);
@@ -95,7 +100,7 @@ class AgentInformationView extends VerticalLayout {
         gridCard.setPadding(true);
         gridCard.setSpacing(false);
         gridCard.setWidthFull();
-        gridCard.add(new H2("Rows"), grid);
+        gridCard.add(new H2("Rows"), searchField, grid);
 
         var form = new FormLayout();
         form.add(agentTin, agentName, agentRdo, agentAddress, agentContact, agentEmail, registrationId);
@@ -207,6 +212,15 @@ class AgentInformationView extends VerticalLayout {
                 .bind(AgentInformation::getRegistrationId, AgentInformation::setRegistrationId);
     }
 
+    private void configureSearch() {
+        searchField.setPlaceholder("Search agents");
+        searchField.setAriaLabel("Search agents");
+        searchField.setClearButtonVisible(true);
+        searchField.setValueChangeMode(ValueChangeMode.LAZY);
+        searchField.setWidthFull();
+        searchField.addValueChangeListener(event -> refreshGrid());
+    }
+
     private void refreshRegistrationOptions() {
         List<String> ids = registrationDetailsRepository.findAll(Sort.by("registrationId"))
                 .stream().map(RegistrationDetails::getRegistrationId).toList();
@@ -219,7 +233,31 @@ class AgentInformationView extends VerticalLayout {
     }
 
     private void refreshGrid() {
-        grid.setItems(repository.findAll(Sort.by("agentTin")));
+        List<AgentInformation> rows = repository.findAll(Sort.by("agentTin"));
+        String searchTerm = searchField.getValue();
+        if (searchTerm == null || searchTerm.isBlank()) {
+            grid.setItems(rows);
+            return;
+        }
+
+        String needle = searchTerm.trim().toLowerCase(Locale.ROOT);
+        grid.setItems(rows.stream()
+                .filter(row -> matchesSearch(row, needle))
+                .toList());
+    }
+
+    private boolean matchesSearch(AgentInformation row, String needle) {
+        return Stream.of(
+                row.getAgentTin(),
+                row.getAgentName(),
+                row.getAgentRdo(),
+                row.getAgentAddress(),
+                row.getAgentContact(),
+                row.getAgentEmail(),
+                row.getRegistrationId())
+                .filter(value -> value != null)
+                .map(value -> value.toLowerCase(Locale.ROOT))
+                .anyMatch(value -> value.contains(needle));
     }
 
     private void edit(AgentInformation entity) {

@@ -30,11 +30,14 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.validator.EmailValidator;
 import com.vaadin.flow.data.validator.StringLengthValidator;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.stream.Stream;
 
 @Route("taxpayers")
 @PageTitle("Taxpayer Information")
@@ -48,6 +51,7 @@ class TaxpayerInformationView extends VerticalLayout {
     private final Grid<TaxpayerInformation> grid = new Grid<>(TaxpayerInformation.class, false);
     private final Binder<TaxpayerInformation> binder = new Binder<>(TaxpayerInformation.class);
 
+    private final TextField searchField = new TextField();
     private final ComboBox<String> registrationId = new ComboBox<>("Registration ID");
     private final TextField philsysNumber = new TextField("PhilSys Number");
     private final TextField foreignTin = new TextField("Foreign TIN");
@@ -85,6 +89,7 @@ class TaxpayerInformationView extends VerticalLayout {
 
         configureFields();
         configureBindings();
+        configureSearch();
 
         var header = new VerticalLayout();
         header.setPadding(false);
@@ -114,7 +119,7 @@ class TaxpayerInformationView extends VerticalLayout {
         gridCard.setPadding(true);
         gridCard.setSpacing(false);
         gridCard.setWidthFull();
-        gridCard.add(new H2("Rows"), grid);
+        gridCard.add(new H2("Rows"), searchField, grid);
 
         var form = new FormLayout();
         form.add(registrationId, taxpayerName, nameCategory, birthDate, birthPlace,
@@ -314,6 +319,15 @@ class TaxpayerInformationView extends VerticalLayout {
                 .bind(TaxpayerInformation::getFatherName, TaxpayerInformation::setFatherName);
     }
 
+    private void configureSearch() {
+        searchField.setPlaceholder("Search taxpayers");
+        searchField.setAriaLabel("Search taxpayers");
+        searchField.setClearButtonVisible(true);
+        searchField.setValueChangeMode(ValueChangeMode.LAZY);
+        searchField.setWidthFull();
+        searchField.addValueChangeListener(event -> refreshGrid());
+    }
+
     private void refreshRegistrationOptions() {
         List<String> ids = registrationDetailsRepository.findAll(Sort.by("registrationId"))
                 .stream().map(RegistrationDetails::getRegistrationId).toList();
@@ -326,7 +340,60 @@ class TaxpayerInformationView extends VerticalLayout {
     }
 
     private void refreshGrid() {
-        grid.setItems(repository.findAll(Sort.by("registrationId")));
+        List<TaxpayerInformation> rows = repository.findAll(Sort.by("registrationId"));
+        String searchTerm = searchField.getValue();
+        if (searchTerm == null || searchTerm.isBlank()) {
+            grid.setItems(rows);
+            return;
+        }
+
+        String needle = searchTerm.trim().toLowerCase(Locale.ROOT);
+        grid.setItems(rows.stream()
+                .filter(row -> matchesSearch(row, needle))
+                .toList());
+    }
+
+    private boolean matchesSearch(TaxpayerInformation row, String needle) {
+        return Stream.of(
+                row.getRegistrationId(),
+                row.getPhilsysNumber(),
+                row.getForeignTin(),
+                row.getResidence(),
+                row.getTaxpayerName(),
+                row.getNameCategory(),
+                row.getBirthDate() == null ? null : row.getBirthDate().toString(),
+                row.getBirthPlace(),
+                row.getLocalAddress(),
+                row.getForeignAddress(),
+                row.getArrivalDate() == null ? null : row.getArrivalDate().toString(),
+                row.getGender(),
+                genderLabel(row.getGender()),
+                row.getCivilStatus(),
+                civilStatusLabel(row.getCivilStatus()),
+                row.getContactNo(),
+                row.getEmail(),
+                row.getMotherName(),
+                row.getFatherName())
+                .filter(value -> value != null)
+                .map(value -> value.toLowerCase(Locale.ROOT))
+                .anyMatch(value -> value.contains(needle));
+    }
+
+    private String genderLabel(String gender) {
+        return "M".equals(gender) ? "Male" : "F".equals(gender) ? "Female" : "I".equals(gender) ? "Other" : gender;
+    }
+
+    private String civilStatusLabel(String civilStatus) {
+        if (civilStatus == null) {
+            return null;
+        }
+        return switch (civilStatus) {
+            case "S" -> "Single";
+            case "M" -> "Married";
+            case "W" -> "Widowed";
+            case "L" -> "Legally Separated";
+            default -> civilStatus;
+        };
     }
 
     private void edit(TaxpayerInformation entity) {

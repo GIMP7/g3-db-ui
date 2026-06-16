@@ -29,9 +29,14 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.validator.StringLengthValidator;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+
+import java.util.List;
+import java.util.Locale;
+import java.util.stream.Stream;
 
 @Route("registrations")
 @PageTitle("Registration Details")
@@ -46,6 +51,7 @@ class RegistrationDetailsView extends VerticalLayout {
     private final Grid<RegistrationDetails> grid = new Grid<>(RegistrationDetails.class, false);
     private final Binder<RegistrationDetails> binder = new Binder<>(RegistrationDetails.class);
 
+    private final TextField searchField = new TextField();
     private final TextField registrationId = new TextField("Registration ID");
     private final ComboBox<String> agentTin = new ComboBox<>("Agent TIN");
     private final DatePicker regDate = new DatePicker("Registration Date");
@@ -73,6 +79,7 @@ class RegistrationDetailsView extends VerticalLayout {
 
         configureBindings();
         configureFields();
+        configureSearch();
 
         var header = new VerticalLayout();
         header.setPadding(false);
@@ -94,7 +101,7 @@ class RegistrationDetailsView extends VerticalLayout {
         gridCard.setPadding(true);
         gridCard.setSpacing(false);
         gridCard.setWidthFull();
-        gridCard.add(new H2("Rows"), grid);
+        gridCard.add(new H2("Rows"), searchField, grid);
 
         var form = new FormLayout();
         form.add(registrationId, agentTin, regDate, taxpayerType, purpose);
@@ -165,6 +172,15 @@ class RegistrationDetailsView extends VerticalLayout {
         purpose.setHelperText("Max 20 characters");
     }
 
+    private void configureSearch() {
+        searchField.setPlaceholder("Search registrations");
+        searchField.setAriaLabel("Search registrations");
+        searchField.setClearButtonVisible(true);
+        searchField.setValueChangeMode(ValueChangeMode.LAZY);
+        searchField.setWidthFull();
+        searchField.addValueChangeListener(event -> refreshGrid());
+    }
+
     private void configureBindings() {
         binder.forField(registrationId)
                 .asRequired("Registration ID is required")
@@ -194,7 +210,29 @@ class RegistrationDetailsView extends VerticalLayout {
     }
 
     private void refreshGrid() {
-        grid.setItems(repository.findAll(Sort.by("registrationId")));
+        List<RegistrationDetails> rows = repository.findAll(Sort.by("registrationId"));
+        String searchTerm = searchField.getValue();
+        if (searchTerm == null || searchTerm.isBlank()) {
+            grid.setItems(rows);
+            return;
+        }
+
+        String needle = searchTerm.trim().toLowerCase(Locale.ROOT);
+        grid.setItems(rows.stream()
+                .filter(row -> matchesSearch(row, needle))
+                .toList());
+    }
+
+    private boolean matchesSearch(RegistrationDetails row, String needle) {
+        return Stream.of(
+                row.getRegistrationId(),
+                row.getAgentTin(),
+                row.getRegDate() == null ? null : row.getRegDate().toString(),
+                row.getTaxpayerType(),
+                row.getPurpose())
+                .filter(value -> value != null)
+                .map(value -> value.toLowerCase(Locale.ROOT))
+                .anyMatch(value -> value.contains(needle));
     }
 
     private void edit(RegistrationDetails entity) {

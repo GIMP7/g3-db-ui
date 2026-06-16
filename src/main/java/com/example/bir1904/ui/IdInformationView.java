@@ -28,11 +28,14 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.validator.StringLengthValidator;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.stream.Stream;
 
 @Route("ids")
 @PageTitle("ID Information")
@@ -46,6 +49,7 @@ class IdInformationView extends VerticalLayout {
     private final Grid<IdInformation> grid = new Grid<>(IdInformation.class, false);
     private final Binder<IdInformation> binder = new Binder<>(IdInformation.class);
 
+    private final TextField searchField = new TextField();
     private final TextField idNumber = new TextField("ID Number");
     private final TextField idType = new TextField("ID Type");
     private final DatePicker idEffective = new DatePicker("Effective Date");
@@ -71,6 +75,7 @@ class IdInformationView extends VerticalLayout {
 
         configureFields();
         configureBindings();
+        configureSearch();
 
         var header = new VerticalLayout();
         header.setPadding(false);
@@ -92,7 +97,7 @@ class IdInformationView extends VerticalLayout {
         gridCard.setPadding(true);
         gridCard.setSpacing(false);
         gridCard.setWidthFull();
-        gridCard.add(new H2("Rows"), grid);
+        gridCard.add(new H2("Rows"), searchField, grid);
 
         var form = new FormLayout();
         form.add(idNumber, idType, idEffective, idExpiry, registrationId);
@@ -180,6 +185,15 @@ class IdInformationView extends VerticalLayout {
                 .bind(IdInformation::getRegistrationId, IdInformation::setRegistrationId);
     }
 
+    private void configureSearch() {
+        searchField.setPlaceholder("Search IDs");
+        searchField.setAriaLabel("Search IDs");
+        searchField.setClearButtonVisible(true);
+        searchField.setValueChangeMode(ValueChangeMode.LAZY);
+        searchField.setWidthFull();
+        searchField.addValueChangeListener(event -> refreshGrid());
+    }
+
     private void refreshRegistrationOptions() {
         List<String> ids = registrationDetailsRepository.findAll(Sort.by("registrationId"))
                 .stream().map(RegistrationDetails::getRegistrationId).toList();
@@ -192,7 +206,29 @@ class IdInformationView extends VerticalLayout {
     }
 
     private void refreshGrid() {
-        grid.setItems(repository.findAll(Sort.by("idNumber")));
+        List<IdInformation> rows = repository.findAll(Sort.by("idNumber"));
+        String searchTerm = searchField.getValue();
+        if (searchTerm == null || searchTerm.isBlank()) {
+            grid.setItems(rows);
+            return;
+        }
+
+        String needle = searchTerm.trim().toLowerCase(Locale.ROOT);
+        grid.setItems(rows.stream()
+                .filter(row -> matchesSearch(row, needle))
+                .toList());
+    }
+
+    private boolean matchesSearch(IdInformation row, String needle) {
+        return Stream.of(
+                row.getIdNumber(),
+                row.getIdType(),
+                row.getIdEffective() == null ? null : row.getIdEffective().toString(),
+                row.getIdExpiry() == null ? null : row.getIdExpiry().toString(),
+                row.getRegistrationId())
+                .filter(value -> value != null)
+                .map(value -> value.toLowerCase(Locale.ROOT))
+                .anyMatch(value -> value.contains(needle));
     }
 
     private void edit(IdInformation entity) {

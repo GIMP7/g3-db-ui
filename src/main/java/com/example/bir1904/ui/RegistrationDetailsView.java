@@ -10,6 +10,7 @@ import com.example.bir1904.AuditLogEntry;
 import com.example.bir1904.AuditLogService;
 import com.example.bir1904.RegistrationDetails;
 import com.example.bir1904.RegistrationDetailsRepository;
+import com.example.bir1904.RegistrationIdSequenceService;
 import com.vaadin.flow.component.HasValidation;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -32,18 +33,15 @@ import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
-import java.util.regex.Pattern;
-
 @Route("registrations")
 @PageTitle("Registration Details")
 @Menu(order = 1, title = "Registrations")
 class RegistrationDetailsView extends VerticalLayout {
 
-    private static final Pattern REGISTRATION_ID_PATTERN = Pattern.compile("REG-(\\d{6})");
-
     private final RegistrationDetailsRepository repository;
     private final AgentInformationRepository agentInformationRepository;
     private final AuditLogService auditLogService;
+    private final RegistrationIdSequenceService idSequenceService;
 
     private final Grid<RegistrationDetails> grid = new Grid<>(RegistrationDetails.class, false);
     private final Binder<RegistrationDetails> binder = new Binder<>(RegistrationDetails.class);
@@ -60,10 +58,12 @@ class RegistrationDetailsView extends VerticalLayout {
 
     RegistrationDetailsView(RegistrationDetailsRepository repository,
             AgentInformationRepository agentInformationRepository,
-            AuditLogService auditLogService) {
+            AuditLogService auditLogService,
+            RegistrationIdSequenceService idSequenceService) {
         this.repository = repository;
         this.agentInformationRepository = agentInformationRepository;
         this.auditLogService = auditLogService;
+        this.idSequenceService = idSequenceService;
 
         addClassName("crud-view");
         setSizeFull();
@@ -109,9 +109,10 @@ class RegistrationDetailsView extends VerticalLayout {
         deleteButton.addClickListener(e -> confirmDelete());
         deleteButton.setEnabled(false);
 
-        var newButton = new Button("New", e -> edit(new RegistrationDetails()));
+        var clearButton = new Button("Clear", e -> clearEditor());
+        var newButton = new Button("New", e -> openNewDraft());
 
-        var actions = new HorizontalLayout(saveButton, deleteButton, newButton);
+        var actions = new HorizontalLayout(saveButton, deleteButton, clearButton, newButton);
         actions.setWidthFull();
         actions.setSpacing(true);
 
@@ -201,10 +202,6 @@ class RegistrationDetailsView extends VerticalLayout {
         boolean isExisting = next.getRegistrationId() != null && !next.getRegistrationId().isBlank()
                 && repository.existsById(next.getRegistrationId());
 
-        if (!isExisting && (next.getRegistrationId() == null || next.getRegistrationId().isBlank())) {
-            next.setRegistrationId(generateNextRegistrationId());
-        }
-
         current = next;
         binder.setBean(current);
         clearValidationState();
@@ -214,16 +211,15 @@ class RegistrationDetailsView extends VerticalLayout {
         saveButton.setText(isExisting ? "Update" : "Create");
     }
 
-    private String generateNextRegistrationId() {
-        int nextNumber = repository.findAll().stream()
-                .map(RegistrationDetails::getRegistrationId)
-                .filter(id -> id != null)
-                .map(REGISTRATION_ID_PATTERN::matcher)
-                .filter(matcher -> matcher.matches())
-                .mapToInt(matcher -> Integer.parseInt(matcher.group(1)))
-                .max()
-                .orElse(0) + 1;
-        return "REG-%06d".formatted(nextNumber);
+    private void openNewDraft() {
+        var draft = new RegistrationDetails();
+        draft.setRegistrationId(idSequenceService.peekNextRegistrationId());
+        edit(draft);
+    }
+
+    private void clearEditor() {
+        grid.asSingleSelect().clear();
+        edit(new RegistrationDetails());
     }
 
     private void clearValidationState() {
@@ -240,7 +236,12 @@ class RegistrationDetailsView extends VerticalLayout {
             return;
         }
         try {
-            boolean isNew = !repository.existsById(current.getRegistrationId());
+            boolean isNew = current.getRegistrationId() == null
+                    || current.getRegistrationId().isBlank()
+                    || !repository.existsById(current.getRegistrationId());
+            if (isNew) {
+                current.setRegistrationId(idSequenceService.consumeNextRegistrationId());
+            }
             repository.save(current);
             auditLogService.log(
                     isNew ? AuditLogEntry.Action.CREATED : AuditLogEntry.Action.UPDATED,

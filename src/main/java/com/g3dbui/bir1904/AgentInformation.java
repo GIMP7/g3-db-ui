@@ -1,4 +1,4 @@
-package com.example.bir1904;
+package com.g3dbui.bir1904;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

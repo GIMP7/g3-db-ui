@@ -1,4 +1,4 @@
 @NullMarked
-package com.example.base.ui;
+package com.g3dbui.base.ui;
 
 import org.jspecify.annotations.NullMarked;

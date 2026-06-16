@@ -1,13 +1,13 @@
-package com.example.schema.ui;
+package com.g3dbui.schema.ui;
 
 import java.util.List;
 
-import com.example.base.ui.ViewTitle;
-import com.example.bir1904.AgentInformationRepository;
-import com.example.bir1904.IdInformationRepository;
-import com.example.bir1904.RegistrationDetailsRepository;
-import com.example.bir1904.SpouseInformationRepository;
-import com.example.bir1904.TaxpayerInformationRepository;
+import com.g3dbui.base.ui.ViewTitle;
+import com.g3dbui.bir1904.AgentInformationRepository;
+import com.g3dbui.bir1904.IdInformationRepository;
+import com.g3dbui.bir1904.RegistrationDetailsRepository;
+import com.g3dbui.bir1904.SpouseInformationRepository;
+import com.g3dbui.bir1904.TaxpayerInformationRepository;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;

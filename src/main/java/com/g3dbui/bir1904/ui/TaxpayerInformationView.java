@@ -1,15 +1,15 @@
-package com.example.bir1904.ui;
+package com.g3dbui.bir1904.ui;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Sort;
 
-import com.example.base.ui.ViewTitle;
-import com.example.bir1904.AuditLogEntry;
-import com.example.bir1904.AuditLogService;
-import com.example.bir1904.RegistrationDetails;
-import com.example.bir1904.RegistrationDetailsRepository;
-import com.example.bir1904.TaxpayerInformation;
-import com.example.bir1904.TaxpayerInformationRepository;
+import com.g3dbui.base.ui.ViewTitle;
+import com.g3dbui.bir1904.AuditLogEntry;
+import com.g3dbui.bir1904.AuditLogService;
+import com.g3dbui.bir1904.RegistrationDetails;
+import com.g3dbui.bir1904.RegistrationDetailsRepository;
+import com.g3dbui.bir1904.TaxpayerInformation;
+import com.g3dbui.bir1904.TaxpayerInformationRepository;
 import com.vaadin.flow.component.HasValidation;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;

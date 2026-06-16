@@ -97,7 +97,7 @@ http://localhost:8081
 ## Project Layout
 
 ```text
-src/main/java/com/example
+src/main/java/com/g3dbui
 |-- Application.java
 |-- base/ui
 |-- bir1904

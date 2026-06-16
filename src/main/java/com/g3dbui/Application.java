@@ -1,4 +1,4 @@
-package com.example;
+package com.g3dbui;
 
 import com.vaadin.flow.theme.aura.Aura;
 import org.springframework.boot.SpringApplication;

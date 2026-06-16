@@ -1,15 +1,15 @@
-package com.example.bir1904.ui;
+package com.g3dbui.bir1904.ui;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Sort;
 
-import com.example.base.ui.ViewTitle;
-import com.example.bir1904.AgentInformation;
-import com.example.bir1904.AgentInformationRepository;
-import com.example.bir1904.AuditLogEntry;
-import com.example.bir1904.AuditLogService;
-import com.example.bir1904.RegistrationDetails;
-import com.example.bir1904.RegistrationDetailsRepository;
+import com.g3dbui.base.ui.ViewTitle;
+import com.g3dbui.bir1904.AuditLogEntry;
+import com.g3dbui.bir1904.AuditLogService;
+import com.g3dbui.bir1904.RegistrationDetails;
+import com.g3dbui.bir1904.RegistrationDetailsRepository;
+import com.g3dbui.bir1904.SpouseInformation;
+import com.g3dbui.bir1904.SpouseInformationRepository;
 import com.vaadin.flow.component.HasValidation;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -24,10 +24,8 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
-import com.vaadin.flow.data.validator.EmailValidator;
 import com.vaadin.flow.data.validator.StringLengthValidator;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Menu;
@@ -38,32 +36,32 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
 
-@Route("agents")
-@PageTitle("Agent Information")
-@Menu(order = 2, title = "Agents")
-class AgentInformationView extends VerticalLayout {
+@Route("spouses")
+@PageTitle("Spouse Information")
+@Menu(order = 5, title = "Spouses")
+class SpouseInformationView extends VerticalLayout {
 
-    private final AgentInformationRepository repository;
+    private final SpouseInformationRepository repository;
     private final RegistrationDetailsRepository registrationDetailsRepository;
     private final AuditLogService auditLogService;
 
-    private final Grid<AgentInformation> grid = new Grid<>(AgentInformation.class, false);
-    private final Binder<AgentInformation> binder = new Binder<>(AgentInformation.class);
+    private final Grid<SpouseInformation> grid = new Grid<>(SpouseInformation.class, false);
+    private final Binder<SpouseInformation> binder = new Binder<>(SpouseInformation.class);
 
     private final TextField searchField = new TextField();
-    private final TextField agentTin = new TextField("Agent TIN");
-    private final TextField agentName = new TextField("Agent Name");
-    private final TextField agentRdo = new TextField("RDO Code");
-    private final TextField agentAddress = new TextField("Agent Address");
-    private final TextField agentContact = new TextField("Contact Number");
-    private final EmailField agentEmail = new EmailField("Agent Email");
+    private final TextField spouseId = new TextField("Spouse ID");
+    private final ComboBox<String> spouseEmployment = new ComboBox<>("Spouse Employment");
+    private final TextField spouseName = new TextField("Spouse Name");
+    private final TextField spouseTin = new TextField("Spouse TIN");
+    private final TextField spouseEmployerName = new TextField("Employer Name");
+    private final TextField spouseEmployerTin = new TextField("Employer TIN");
     private final ComboBox<String> registrationId = new ComboBox<>("Registration ID");
 
     private final Button saveButton = new Button("Create");
     private final Button deleteButton = new Button("Delete");
-    private AgentInformation current = new AgentInformation();
+    private SpouseInformation current = new SpouseInformation();
 
-    AgentInformationView(AgentInformationRepository repository,
+    SpouseInformationView(SpouseInformationRepository repository,
             RegistrationDetailsRepository registrationDetailsRepository,
             AuditLogService auditLogService) {
         this.repository = repository;
@@ -83,16 +81,16 @@ class AgentInformationView extends VerticalLayout {
         var header = new VerticalLayout();
         header.setPadding(false);
         header.setSpacing(false);
-        header.add(new ViewTitle("Agent Information"));
-        header.add(new Paragraph("Registered agents linked back to a registration row."));
+        header.add(new ViewTitle("Spouse Information"));
+        header.add(new Paragraph("Optional spouse records and employer details."));
 
         grid.setWidthFull();
         grid.setHeight("28rem");
-        grid.addColumn(AgentInformation::getAgentTin).setHeader("Agent TIN").setSortable(true);
-        grid.addColumn(AgentInformation::getAgentName).setHeader("Agent Name").setSortable(true);
-        grid.addColumn(AgentInformation::getAgentRdo).setHeader("RDO");
-        grid.addColumn(AgentInformation::getAgentEmail).setHeader("Email");
-        grid.addColumn(AgentInformation::getRegistrationId).setHeader("Registration ID");
+        grid.addColumn(SpouseInformation::getSpouseId).setHeader("Spouse ID").setSortable(true);
+        grid.addColumn(SpouseInformation::getSpouseEmployment).setHeader("Employment");
+        grid.addColumn(SpouseInformation::getSpouseName).setHeader("Spouse Name").setSortable(true);
+        grid.addColumn(s -> s.getSpouseTin() == null ? "—" : s.getSpouseTin()).setHeader("Spouse TIN");
+        grid.addColumn(SpouseInformation::getRegistrationId).setHeader("Registration ID").setSortable(true);
         grid.asSingleSelect().addValueChangeListener(event -> edit(event.getValue()));
 
         var gridCard = new VerticalLayout();
@@ -103,7 +101,8 @@ class AgentInformationView extends VerticalLayout {
         gridCard.add(new H2("Rows"), searchField, grid);
 
         var form = new FormLayout();
-        form.add(agentTin, agentName, agentRdo, agentAddress, agentContact, agentEmail, registrationId);
+        form.add(spouseId, registrationId, spouseEmployment, spouseName,
+                spouseTin, spouseEmployerName, spouseEmployerTin);
         form.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
                 new FormLayout.ResponsiveStep("48em", 2));
@@ -115,7 +114,7 @@ class AgentInformationView extends VerticalLayout {
         deleteButton.addClickListener(e -> confirmDelete());
         deleteButton.setEnabled(false);
 
-        var newButton = new Button("New", e -> edit(new AgentInformation()));
+        var newButton = new Button("New", e -> edit(new SpouseInformation()));
 
         var actions = new HorizontalLayout(saveButton, deleteButton, newButton);
         actions.setWidthFull();
@@ -140,35 +139,34 @@ class AgentInformationView extends VerticalLayout {
 
         refreshRegistrationOptions();
         refreshGrid();
-        edit(new AgentInformation());
+        edit(new SpouseInformation());
     }
 
     private void configureFields() {
-        agentTin.setWidthFull();
-        agentTin.setRequired(true);
-        agentTin.setMaxLength(15);
-        agentTin.setHelperText("Max 15 characters, e.g. 123-456-789-000");
+        spouseId.setWidthFull();
+        spouseId.setRequired(true);
+        spouseId.setMaxLength(10);
+        spouseId.setHelperText("Max 10 characters, e.g. SP-000011");
 
-        agentName.setWidthFull();
-        agentName.setRequired(true);
-        agentName.setMaxLength(70);
+        spouseEmployment.setWidthFull();
+        spouseEmployment.setRequired(true);
+        spouseEmployment.setItems("Unemployed", "Employed-Locally", "Employed-Abroad", "Engaged in Business");
 
-        agentRdo.setWidthFull();
-        agentRdo.setRequired(true);
-        agentRdo.setMaxLength(3);
-        agentRdo.setHelperText("3-digit RDO code, e.g. 043");
+        spouseName.setWidthFull();
+        spouseName.setRequired(true);
+        spouseName.setMaxLength(70);
 
-        agentAddress.setWidthFull();
-        agentAddress.setRequired(true);
-        agentAddress.setMaxLength(150);
+        spouseTin.setWidthFull();
+        spouseTin.setMaxLength(15);
+        spouseTin.setHelperText("Optional");
 
-        agentContact.setWidthFull();
-        agentContact.setRequired(true);
-        agentContact.setMaxLength(15);
+        spouseEmployerName.setWidthFull();
+        spouseEmployerName.setMaxLength(70);
+        spouseEmployerName.setHelperText("Optional");
 
-        agentEmail.setWidthFull();
-        agentEmail.setRequired(true);
-        agentEmail.setMaxLength(40);
+        spouseEmployerTin.setWidthFull();
+        spouseEmployerTin.setMaxLength(15);
+        spouseEmployerTin.setHelperText("Optional");
 
         registrationId.setWidthFull();
         registrationId.setRequired(true);
@@ -176,45 +174,40 @@ class AgentInformationView extends VerticalLayout {
     }
 
     private void configureBindings() {
-        binder.forField(agentTin)
-                .asRequired("Agent TIN is required")
-                .withValidator(new StringLengthValidator("Max 15 characters", 1, 15))
-                .bind(AgentInformation::getAgentTin, AgentInformation::setAgentTin);
+        binder.forField(spouseId)
+                .asRequired("Spouse ID is required")
+                .withValidator(new StringLengthValidator("Max 10 characters", 1, 10))
+                .bind(SpouseInformation::getSpouseId, SpouseInformation::setSpouseId);
 
-        binder.forField(agentName)
-                .asRequired("Agent name is required")
+        binder.forField(spouseEmployment)
+                .asRequired("Employment status is required")
+                .bind(SpouseInformation::getSpouseEmployment, SpouseInformation::setSpouseEmployment);
+
+        binder.forField(spouseName)
+                .asRequired("Spouse name is required")
                 .withValidator(new StringLengthValidator("Max 70 characters", 1, 70))
-                .bind(AgentInformation::getAgentName, AgentInformation::setAgentName);
+                .bind(SpouseInformation::getSpouseName, SpouseInformation::setSpouseName);
 
-        binder.forField(agentRdo)
-                .asRequired("RDO code is required")
-                .withValidator(new StringLengthValidator("Must be 1–3 characters", 1, 3))
-                .bind(AgentInformation::getAgentRdo, AgentInformation::setAgentRdo);
+        binder.forField(spouseTin)
+                .withValidator(v -> v == null || v.isBlank() || v.length() <= 15, "Max 15 characters")
+                .bind(SpouseInformation::getSpouseTin, SpouseInformation::setSpouseTin);
 
-        binder.forField(agentAddress)
-                .asRequired("Address is required")
-                .withValidator(new StringLengthValidator("Max 150 characters", 1, 150))
-                .bind(AgentInformation::getAgentAddress, AgentInformation::setAgentAddress);
+        binder.forField(spouseEmployerName)
+                .withValidator(v -> v == null || v.isBlank() || v.length() <= 70, "Max 70 characters")
+                .bind(SpouseInformation::getSpouseEmployerName, SpouseInformation::setSpouseEmployerName);
 
-        binder.forField(agentContact)
-                .asRequired("Contact number is required")
-                .withValidator(new StringLengthValidator("Max 15 characters", 1, 15))
-                .bind(AgentInformation::getAgentContact, AgentInformation::setAgentContact);
-
-        binder.forField(agentEmail)
-                .asRequired("Email is required")
-                .withValidator(new EmailValidator("Enter a valid email address"))
-                .withValidator(new StringLengthValidator("Max 40 characters", 1, 40))
-                .bind(AgentInformation::getAgentEmail, AgentInformation::setAgentEmail);
+        binder.forField(spouseEmployerTin)
+                .withValidator(v -> v == null || v.isBlank() || v.length() <= 15, "Max 15 characters")
+                .bind(SpouseInformation::getSpouseEmployerTin, SpouseInformation::setSpouseEmployerTin);
 
         binder.forField(registrationId)
-                .asRequired("Registration ID is required — select from the list")
-                .bind(AgentInformation::getRegistrationId, AgentInformation::setRegistrationId);
+                .asRequired("Registration ID is required")
+                .bind(SpouseInformation::getRegistrationId, SpouseInformation::setRegistrationId);
     }
 
     private void configureSearch() {
-        searchField.setPlaceholder("Search agents");
-        searchField.setAriaLabel("Search agents");
+        searchField.setPlaceholder("Search spouses");
+        searchField.setAriaLabel("Search spouses");
         searchField.setClearButtonVisible(true);
         searchField.setValueChangeMode(ValueChangeMode.LAZY);
         searchField.setWidthFull();
@@ -233,7 +226,7 @@ class AgentInformationView extends VerticalLayout {
     }
 
     private void refreshGrid() {
-        List<AgentInformation> rows = repository.findAll(Sort.by("agentTin"));
+        List<SpouseInformation> rows = repository.findAll(Sort.by("spouseId"));
         String searchTerm = searchField.getValue();
         if (searchTerm == null || searchTerm.isBlank()) {
             grid.setItems(rows);
@@ -246,29 +239,29 @@ class AgentInformationView extends VerticalLayout {
                 .toList());
     }
 
-    private boolean matchesSearch(AgentInformation row, String needle) {
+    private boolean matchesSearch(SpouseInformation row, String needle) {
         return Stream.of(
-                row.getAgentTin(),
-                row.getAgentName(),
-                row.getAgentRdo(),
-                row.getAgentAddress(),
-                row.getAgentContact(),
-                row.getAgentEmail(),
+                row.getSpouseId(),
+                row.getSpouseEmployment(),
+                row.getSpouseName(),
+                row.getSpouseTin(),
+                row.getSpouseEmployerName(),
+                row.getSpouseEmployerTin(),
                 row.getRegistrationId())
                 .filter(value -> value != null)
                 .map(value -> value.toLowerCase(Locale.ROOT))
                 .anyMatch(value -> value.contains(needle));
     }
 
-    private void edit(AgentInformation entity) {
-        current = entity == null ? new AgentInformation() : entity;
+    private void edit(SpouseInformation entity) {
+        current = entity == null ? new SpouseInformation() : entity;
         binder.setBean(current);
         clearValidationState();
         refreshRegistrationOptions();
 
-        boolean isExisting = current.getAgentTin() != null && !current.getAgentTin().isBlank()
-                && repository.existsById(current.getAgentTin());
-        agentTin.setReadOnly(isExisting);
+        boolean isExisting = current.getSpouseId() != null && !current.getSpouseId().isBlank()
+                && repository.existsById(current.getSpouseId());
+        spouseId.setReadOnly(isExisting);
         deleteButton.setEnabled(isExisting);
         saveButton.setText(isExisting ? "Update" : "Create");
     }
@@ -292,28 +285,32 @@ class AgentInformationView extends VerticalLayout {
             notify("Please fix the highlighted fields before saving.", NotificationVariant.LUMO_ERROR);
             return;
         }
+        // Normalize optional blank strings to null for nullable DB columns
+        current.setSpouseTin(blankToNull(current.getSpouseTin()));
+        current.setSpouseEmployerName(blankToNull(current.getSpouseEmployerName()));
+        current.setSpouseEmployerTin(blankToNull(current.getSpouseEmployerTin()));
         try {
-            boolean isNew = !repository.existsById(current.getAgentTin());
+            boolean isNew = !repository.existsById(current.getSpouseId());
             repository.save(current);
             auditLogService.log(
                     isNew ? AuditLogEntry.Action.CREATED : AuditLogEntry.Action.UPDATED,
-                    "agent_information",
-                    current.getAgentTin(),
-                    (isNew ? "Created" : "Updated") + " agent " + current.getAgentTin()
-                            + " — " + current.getAgentName());
+                    "spouse_information",
+                    current.getSpouseId(),
+                    (isNew ? "Created" : "Updated") + " spouse " + current.getSpouseId()
+                            + " — " + current.getSpouseName() + " for reg " + current.getRegistrationId());
             refreshGrid();
-            edit(new AgentInformation());
-            notify("Agent saved successfully.", NotificationVariant.LUMO_SUCCESS);
+            edit(new SpouseInformation());
+            notify("Spouse record saved successfully.", NotificationVariant.LUMO_SUCCESS);
         } catch (DataIntegrityViolationException ex) {
-            handleSaveError("agent", ex);
+            handleSaveError("spouse record", ex);
         }
     }
 
     private void confirmDelete() {
-        if (current.getAgentTin() == null || current.getAgentTin().isBlank()) return;
+        if (current.getSpouseId() == null || current.getSpouseId().isBlank()) return;
         var dialog = new ConfirmDialog();
-        dialog.setHeader("Delete Agent?");
-        dialog.setText("Delete agent \"" + current.getAgentTin() + " — " + current.getAgentName() + "\"?");
+        dialog.setHeader("Delete Spouse Record?");
+        dialog.setText("Delete spouse \"" + current.getSpouseName() + "\" (ID: " + current.getSpouseId() + ")?");
         dialog.setCancelable(true);
         dialog.setConfirmText("Delete");
         dialog.setConfirmButtonTheme("error primary");
@@ -322,29 +319,33 @@ class AgentInformationView extends VerticalLayout {
     }
 
     private void delete() {
-        String tin = current.getAgentTin();
-        String name = current.getAgentName();
+        String id = current.getSpouseId();
+        String name = current.getSpouseName();
         try {
             repository.delete(current);
-            auditLogService.log(AuditLogEntry.Action.DELETED, "agent_information", tin,
-                    "Deleted agent " + tin + " — " + name);
+            auditLogService.log(AuditLogEntry.Action.DELETED, "spouse_information", id,
+                    "Deleted spouse " + id + " — " + name);
             refreshGrid();
-            edit(new AgentInformation());
-            notify("Agent \"" + tin + "\" deleted.", NotificationVariant.LUMO_SUCCESS);
+            edit(new SpouseInformation());
+            notify("Spouse record \"" + id + "\" deleted.", NotificationVariant.LUMO_SUCCESS);
         } catch (DataIntegrityViolationException ex) {
-            notify("Cannot delete: this agent is still referenced by other records.", NotificationVariant.LUMO_ERROR);
+            notify("Cannot delete: this record is still referenced by other data.", NotificationVariant.LUMO_ERROR);
         }
     }
 
     private void handleSaveError(String entity, DataIntegrityViolationException ex) {
         String msg = ex.getMostSpecificCause().getMessage();
         if (msg != null && msg.toLowerCase().contains("unique")) {
-            notify("Cannot save " + entity + ": a record with this ID already exists.", NotificationVariant.LUMO_ERROR);
+            notify("Cannot save: a spouse record with this ID already exists.", NotificationVariant.LUMO_ERROR);
         } else if (msg != null && msg.toLowerCase().contains("foreign key")) {
-            notify("Cannot save " + entity + ": the selected Registration ID does not exist.", NotificationVariant.LUMO_ERROR);
+            notify("Cannot save: the selected Registration ID does not exist.", NotificationVariant.LUMO_ERROR);
         } else {
             notify("Cannot save " + entity + ": please check all required fields are filled correctly.", NotificationVariant.LUMO_ERROR);
         }
+    }
+
+    private String blankToNull(String value) {
+        return (value == null || value.isBlank()) ? null : value;
     }
 
     private void notify(String message, NotificationVariant variant) {

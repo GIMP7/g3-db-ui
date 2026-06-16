@@ -1,4 +1,4 @@
-package com.example.base.ui;
+package com.g3dbui.base.ui;
 
 import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.applayout.DrawerToggle;

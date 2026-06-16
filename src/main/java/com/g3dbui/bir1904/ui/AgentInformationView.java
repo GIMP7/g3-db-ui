@@ -1,21 +1,20 @@
-package com.example.bir1904.ui;
+package com.g3dbui.bir1904.ui;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Sort;
 
-import com.example.base.ui.ViewTitle;
-import com.example.bir1904.AuditLogEntry;
-import com.example.bir1904.AuditLogService;
-import com.example.bir1904.IdInformation;
-import com.example.bir1904.IdInformationRepository;
-import com.example.bir1904.RegistrationDetails;
-import com.example.bir1904.RegistrationDetailsRepository;
+import com.g3dbui.base.ui.ViewTitle;
+import com.g3dbui.bir1904.AgentInformation;
+import com.g3dbui.bir1904.AgentInformationRepository;
+import com.g3dbui.bir1904.AuditLogEntry;
+import com.g3dbui.bir1904.AuditLogService;
+import com.g3dbui.bir1904.RegistrationDetails;
+import com.g3dbui.bir1904.RegistrationDetailsRepository;
 import com.vaadin.flow.component.HasValidation;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
-import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
@@ -25,8 +24,10 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.validator.EmailValidator;
 import com.vaadin.flow.data.validator.StringLengthValidator;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Menu;
@@ -37,30 +38,32 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
 
-@Route("ids")
-@PageTitle("ID Information")
-@Menu(order = 4, title = "IDs")
-class IdInformationView extends VerticalLayout {
+@Route("agents")
+@PageTitle("Agent Information")
+@Menu(order = 2, title = "Agents")
+class AgentInformationView extends VerticalLayout {
 
-    private final IdInformationRepository repository;
+    private final AgentInformationRepository repository;
     private final RegistrationDetailsRepository registrationDetailsRepository;
     private final AuditLogService auditLogService;
 
-    private final Grid<IdInformation> grid = new Grid<>(IdInformation.class, false);
-    private final Binder<IdInformation> binder = new Binder<>(IdInformation.class);
+    private final Grid<AgentInformation> grid = new Grid<>(AgentInformation.class, false);
+    private final Binder<AgentInformation> binder = new Binder<>(AgentInformation.class);
 
     private final TextField searchField = new TextField();
-    private final TextField idNumber = new TextField("ID Number");
-    private final TextField idType = new TextField("ID Type");
-    private final DatePicker idEffective = new DatePicker("Effective Date");
-    private final DatePicker idExpiry = new DatePicker("Expiry Date");
+    private final TextField agentTin = new TextField("Agent TIN");
+    private final TextField agentName = new TextField("Agent Name");
+    private final TextField agentRdo = new TextField("RDO Code");
+    private final TextField agentAddress = new TextField("Agent Address");
+    private final TextField agentContact = new TextField("Contact Number");
+    private final EmailField agentEmail = new EmailField("Agent Email");
     private final ComboBox<String> registrationId = new ComboBox<>("Registration ID");
 
     private final Button saveButton = new Button("Create");
     private final Button deleteButton = new Button("Delete");
-    private IdInformation current = new IdInformation();
+    private AgentInformation current = new AgentInformation();
 
-    IdInformationView(IdInformationRepository repository,
+    AgentInformationView(AgentInformationRepository repository,
             RegistrationDetailsRepository registrationDetailsRepository,
             AuditLogService auditLogService) {
         this.repository = repository;
@@ -80,16 +83,16 @@ class IdInformationView extends VerticalLayout {
         var header = new VerticalLayout();
         header.setPadding(false);
         header.setSpacing(false);
-        header.add(new ViewTitle("ID Information"));
-        header.add(new Paragraph("Supporting identity documents linked to registrations."));
+        header.add(new ViewTitle("Agent Information"));
+        header.add(new Paragraph("Registered agents linked back to a registration row."));
 
         grid.setWidthFull();
         grid.setHeight("28rem");
-        grid.addColumn(IdInformation::getIdNumber).setHeader("ID Number").setSortable(true);
-        grid.addColumn(IdInformation::getIdType).setHeader("Type").setSortable(true);
-        grid.addColumn(IdInformation::getIdEffective).setHeader("Effective");
-        grid.addColumn(item -> item.getIdExpiry() == null ? "—" : item.getIdExpiry().toString()).setHeader("Expiry");
-        grid.addColumn(IdInformation::getRegistrationId).setHeader("Registration ID").setSortable(true);
+        grid.addColumn(AgentInformation::getAgentTin).setHeader("Agent TIN").setSortable(true);
+        grid.addColumn(AgentInformation::getAgentName).setHeader("Agent Name").setSortable(true);
+        grid.addColumn(AgentInformation::getAgentRdo).setHeader("RDO");
+        grid.addColumn(AgentInformation::getAgentEmail).setHeader("Email");
+        grid.addColumn(AgentInformation::getRegistrationId).setHeader("Registration ID");
         grid.asSingleSelect().addValueChangeListener(event -> edit(event.getValue()));
 
         var gridCard = new VerticalLayout();
@@ -100,7 +103,7 @@ class IdInformationView extends VerticalLayout {
         gridCard.add(new H2("Rows"), searchField, grid);
 
         var form = new FormLayout();
-        form.add(idNumber, idType, idEffective, idExpiry, registrationId);
+        form.add(agentTin, agentName, agentRdo, agentAddress, agentContact, agentEmail, registrationId);
         form.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
                 new FormLayout.ResponsiveStep("48em", 2));
@@ -112,7 +115,7 @@ class IdInformationView extends VerticalLayout {
         deleteButton.addClickListener(e -> confirmDelete());
         deleteButton.setEnabled(false);
 
-        var newButton = new Button("New", e -> edit(new IdInformation()));
+        var newButton = new Button("New", e -> edit(new AgentInformation()));
 
         var actions = new HorizontalLayout(saveButton, deleteButton, newButton);
         actions.setWidthFull();
@@ -137,25 +140,35 @@ class IdInformationView extends VerticalLayout {
 
         refreshRegistrationOptions();
         refreshGrid();
-        edit(new IdInformation());
+        edit(new AgentInformation());
     }
 
     private void configureFields() {
-        idNumber.setWidthFull();
-        idNumber.setRequired(true);
-        idNumber.setMaxLength(20);
-        idNumber.setHelperText("Max 20 characters");
+        agentTin.setWidthFull();
+        agentTin.setRequired(true);
+        agentTin.setMaxLength(15);
+        agentTin.setHelperText("Max 15 characters, e.g. 123-456-789-000");
 
-        idType.setWidthFull();
-        idType.setRequired(true);
-        idType.setMaxLength(30);
-        idType.setHelperText("e.g. Passport, Driver's License, UMID");
+        agentName.setWidthFull();
+        agentName.setRequired(true);
+        agentName.setMaxLength(70);
 
-        idEffective.setWidthFull();
-        idEffective.setRequired(true);
+        agentRdo.setWidthFull();
+        agentRdo.setRequired(true);
+        agentRdo.setMaxLength(3);
+        agentRdo.setHelperText("3-digit RDO code, e.g. 043");
 
-        idExpiry.setWidthFull();
-        idExpiry.setHelperText("Optional — leave blank for IDs with no expiry");
+        agentAddress.setWidthFull();
+        agentAddress.setRequired(true);
+        agentAddress.setMaxLength(150);
+
+        agentContact.setWidthFull();
+        agentContact.setRequired(true);
+        agentContact.setMaxLength(15);
+
+        agentEmail.setWidthFull();
+        agentEmail.setRequired(true);
+        agentEmail.setMaxLength(40);
 
         registrationId.setWidthFull();
         registrationId.setRequired(true);
@@ -163,31 +176,45 @@ class IdInformationView extends VerticalLayout {
     }
 
     private void configureBindings() {
-        binder.forField(idNumber)
-                .asRequired("ID number is required")
-                .withValidator(new StringLengthValidator("Max 20 characters", 1, 20))
-                .bind(IdInformation::getIdNumber, IdInformation::setIdNumber);
+        binder.forField(agentTin)
+                .asRequired("Agent TIN is required")
+                .withValidator(new StringLengthValidator("Max 15 characters", 1, 15))
+                .bind(AgentInformation::getAgentTin, AgentInformation::setAgentTin);
 
-        binder.forField(idType)
-                .asRequired("ID type is required")
-                .withValidator(new StringLengthValidator("Max 30 characters", 1, 30))
-                .bind(IdInformation::getIdType, IdInformation::setIdType);
+        binder.forField(agentName)
+                .asRequired("Agent name is required")
+                .withValidator(new StringLengthValidator("Max 70 characters", 1, 70))
+                .bind(AgentInformation::getAgentName, AgentInformation::setAgentName);
 
-        binder.forField(idEffective)
-                .asRequired("Effective date is required")
-                .bind(IdInformation::getIdEffective, IdInformation::setIdEffective);
+        binder.forField(agentRdo)
+                .asRequired("RDO code is required")
+                .withValidator(new StringLengthValidator("Must be 1–3 characters", 1, 3))
+                .bind(AgentInformation::getAgentRdo, AgentInformation::setAgentRdo);
 
-        binder.forField(idExpiry)
-                .bind(IdInformation::getIdExpiry, IdInformation::setIdExpiry);
+        binder.forField(agentAddress)
+                .asRequired("Address is required")
+                .withValidator(new StringLengthValidator("Max 150 characters", 1, 150))
+                .bind(AgentInformation::getAgentAddress, AgentInformation::setAgentAddress);
+
+        binder.forField(agentContact)
+                .asRequired("Contact number is required")
+                .withValidator(new StringLengthValidator("Max 15 characters", 1, 15))
+                .bind(AgentInformation::getAgentContact, AgentInformation::setAgentContact);
+
+        binder.forField(agentEmail)
+                .asRequired("Email is required")
+                .withValidator(new EmailValidator("Enter a valid email address"))
+                .withValidator(new StringLengthValidator("Max 40 characters", 1, 40))
+                .bind(AgentInformation::getAgentEmail, AgentInformation::setAgentEmail);
 
         binder.forField(registrationId)
-                .asRequired("Registration ID is required")
-                .bind(IdInformation::getRegistrationId, IdInformation::setRegistrationId);
+                .asRequired("Registration ID is required — select from the list")
+                .bind(AgentInformation::getRegistrationId, AgentInformation::setRegistrationId);
     }
 
     private void configureSearch() {
-        searchField.setPlaceholder("Search IDs");
-        searchField.setAriaLabel("Search IDs");
+        searchField.setPlaceholder("Search agents");
+        searchField.setAriaLabel("Search agents");
         searchField.setClearButtonVisible(true);
         searchField.setValueChangeMode(ValueChangeMode.LAZY);
         searchField.setWidthFull();
@@ -206,7 +233,7 @@ class IdInformationView extends VerticalLayout {
     }
 
     private void refreshGrid() {
-        List<IdInformation> rows = repository.findAll(Sort.by("idNumber"));
+        List<AgentInformation> rows = repository.findAll(Sort.by("agentTin"));
         String searchTerm = searchField.getValue();
         if (searchTerm == null || searchTerm.isBlank()) {
             grid.setItems(rows);
@@ -219,27 +246,29 @@ class IdInformationView extends VerticalLayout {
                 .toList());
     }
 
-    private boolean matchesSearch(IdInformation row, String needle) {
+    private boolean matchesSearch(AgentInformation row, String needle) {
         return Stream.of(
-                row.getIdNumber(),
-                row.getIdType(),
-                row.getIdEffective() == null ? null : row.getIdEffective().toString(),
-                row.getIdExpiry() == null ? null : row.getIdExpiry().toString(),
+                row.getAgentTin(),
+                row.getAgentName(),
+                row.getAgentRdo(),
+                row.getAgentAddress(),
+                row.getAgentContact(),
+                row.getAgentEmail(),
                 row.getRegistrationId())
                 .filter(value -> value != null)
                 .map(value -> value.toLowerCase(Locale.ROOT))
                 .anyMatch(value -> value.contains(needle));
     }
 
-    private void edit(IdInformation entity) {
-        current = entity == null ? new IdInformation() : entity;
+    private void edit(AgentInformation entity) {
+        current = entity == null ? new AgentInformation() : entity;
         binder.setBean(current);
         clearValidationState();
         refreshRegistrationOptions();
 
-        boolean isExisting = current.getIdNumber() != null && !current.getIdNumber().isBlank()
-                && repository.existsById(current.getIdNumber());
-        idNumber.setReadOnly(isExisting);
+        boolean isExisting = current.getAgentTin() != null && !current.getAgentTin().isBlank()
+                && repository.existsById(current.getAgentTin());
+        agentTin.setReadOnly(isExisting);
         deleteButton.setEnabled(isExisting);
         saveButton.setText(isExisting ? "Update" : "Create");
     }
@@ -264,27 +293,27 @@ class IdInformationView extends VerticalLayout {
             return;
         }
         try {
-            boolean isNew = !repository.existsById(current.getIdNumber());
+            boolean isNew = !repository.existsById(current.getAgentTin());
             repository.save(current);
             auditLogService.log(
                     isNew ? AuditLogEntry.Action.CREATED : AuditLogEntry.Action.UPDATED,
-                    "id_information",
-                    current.getIdNumber(),
-                    (isNew ? "Created" : "Updated") + " ID " + current.getIdNumber()
-                            + " (" + current.getIdType() + ") for reg " + current.getRegistrationId());
+                    "agent_information",
+                    current.getAgentTin(),
+                    (isNew ? "Created" : "Updated") + " agent " + current.getAgentTin()
+                            + " — " + current.getAgentName());
             refreshGrid();
-            edit(new IdInformation());
-            notify("ID record saved successfully.", NotificationVariant.LUMO_SUCCESS);
+            edit(new AgentInformation());
+            notify("Agent saved successfully.", NotificationVariant.LUMO_SUCCESS);
         } catch (DataIntegrityViolationException ex) {
-            handleSaveError("ID record", ex);
+            handleSaveError("agent", ex);
         }
     }
 
     private void confirmDelete() {
-        if (current.getIdNumber() == null || current.getIdNumber().isBlank()) return;
+        if (current.getAgentTin() == null || current.getAgentTin().isBlank()) return;
         var dialog = new ConfirmDialog();
-        dialog.setHeader("Delete ID Record?");
-        dialog.setText("Delete ID \"" + current.getIdNumber() + "\" (" + current.getIdType() + ")?");
+        dialog.setHeader("Delete Agent?");
+        dialog.setText("Delete agent \"" + current.getAgentTin() + " — " + current.getAgentName() + "\"?");
         dialog.setCancelable(true);
         dialog.setConfirmText("Delete");
         dialog.setConfirmButtonTheme("error primary");
@@ -293,26 +322,26 @@ class IdInformationView extends VerticalLayout {
     }
 
     private void delete() {
-        String id = current.getIdNumber();
-        String type = current.getIdType();
+        String tin = current.getAgentTin();
+        String name = current.getAgentName();
         try {
             repository.delete(current);
-            auditLogService.log(AuditLogEntry.Action.DELETED, "id_information", id,
-                    "Deleted ID " + id + " (" + type + ")");
+            auditLogService.log(AuditLogEntry.Action.DELETED, "agent_information", tin,
+                    "Deleted agent " + tin + " — " + name);
             refreshGrid();
-            edit(new IdInformation());
-            notify("ID record \"" + id + "\" deleted.", NotificationVariant.LUMO_SUCCESS);
+            edit(new AgentInformation());
+            notify("Agent \"" + tin + "\" deleted.", NotificationVariant.LUMO_SUCCESS);
         } catch (DataIntegrityViolationException ex) {
-            notify("Cannot delete: this record is still referenced by other data.", NotificationVariant.LUMO_ERROR);
+            notify("Cannot delete: this agent is still referenced by other records.", NotificationVariant.LUMO_ERROR);
         }
     }
 
     private void handleSaveError(String entity, DataIntegrityViolationException ex) {
         String msg = ex.getMostSpecificCause().getMessage();
         if (msg != null && msg.toLowerCase().contains("unique")) {
-            notify("Cannot save: an ID with this number already exists.", NotificationVariant.LUMO_ERROR);
+            notify("Cannot save " + entity + ": a record with this ID already exists.", NotificationVariant.LUMO_ERROR);
         } else if (msg != null && msg.toLowerCase().contains("foreign key")) {
-            notify("Cannot save: the selected Registration ID does not exist.", NotificationVariant.LUMO_ERROR);
+            notify("Cannot save " + entity + ": the selected Registration ID does not exist.", NotificationVariant.LUMO_ERROR);
         } else {
             notify("Cannot save " + entity + ": please check all required fields are filled correctly.", NotificationVariant.LUMO_ERROR);
         }

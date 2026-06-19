@@ -158,6 +158,7 @@ class RegistrationDetailsView extends VerticalLayout {
 
         regDate.setWidthFull();
         regDate.setRequired(true);
+        setDateFormat(regDate, "Format: DD-MM-YYYY");
 
         taxpayerType.setWidthFull();
         taxpayerType.setRequired(true);
@@ -169,7 +170,7 @@ class RegistrationDetailsView extends VerticalLayout {
         purpose.setWidthFull();
         purpose.setRequired(true);
         purpose.setMaxLength(20);
-        purpose.setHelperText("Max 20 characters");
+        purpose.setHelperText("Max 20 characters, e.g. Local Employment");
     }
 
     private void configureSearch() {
@@ -179,6 +180,13 @@ class RegistrationDetailsView extends VerticalLayout {
         searchField.setValueChangeMode(ValueChangeMode.LAZY);
         searchField.setWidthFull();
         searchField.addValueChangeListener(event -> refreshGrid());
+    }
+
+    private void setDateFormat(DatePicker picker, String helperText) {
+        var i18n = new DatePicker.DatePickerI18n();
+        i18n.setDateFormat("dd-MM-yyyy");
+        picker.setI18n(i18n);
+        picker.setHelperText(helperText);
     }
 
     private void configureBindings() {

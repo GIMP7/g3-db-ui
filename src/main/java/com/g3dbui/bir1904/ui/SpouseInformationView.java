@@ -158,7 +158,7 @@ class SpouseInformationView extends VerticalLayout {
 
         spouseTin.setWidthFull();
         spouseTin.setMaxLength(15);
-        spouseTin.setHelperText("Optional");
+        spouseTin.setHelperText("Optional, e.g. 123-456-789-000");
 
         spouseEmployerName.setWidthFull();
         spouseEmployerName.setMaxLength(70);
@@ -166,7 +166,7 @@ class SpouseInformationView extends VerticalLayout {
 
         spouseEmployerTin.setWidthFull();
         spouseEmployerTin.setMaxLength(15);
-        spouseEmployerTin.setHelperText("Optional");
+        spouseEmployerTin.setHelperText("Optional, e.g. 123-456-789-000");
 
         registrationId.setWidthFull();
         registrationId.setRequired(true);
@@ -255,9 +255,9 @@ class SpouseInformationView extends VerticalLayout {
 
     private void edit(SpouseInformation entity) {
         current = entity == null ? new SpouseInformation() : entity;
+        refreshRegistrationOptions();
         binder.setBean(current);
         clearValidationState();
-        refreshRegistrationOptions();
 
         boolean isExisting = current.getSpouseId() != null && !current.getSpouseId().isBlank()
                 && repository.existsById(current.getSpouseId());

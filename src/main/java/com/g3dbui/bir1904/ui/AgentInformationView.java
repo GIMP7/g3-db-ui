@@ -165,10 +165,12 @@ class AgentInformationView extends VerticalLayout {
         agentContact.setWidthFull();
         agentContact.setRequired(true);
         agentContact.setMaxLength(15);
+        agentContact.setHelperText("Max 15 characters, e.g. 09171234567");
 
         agentEmail.setWidthFull();
         agentEmail.setRequired(true);
         agentEmail.setMaxLength(40);
+        agentEmail.setHelperText("Example: name@example.com");
 
         registrationId.setWidthFull();
         registrationId.setRequired(true);
@@ -262,9 +264,9 @@ class AgentInformationView extends VerticalLayout {
 
     private void edit(AgentInformation entity) {
         current = entity == null ? new AgentInformation() : entity;
+        refreshRegistrationOptions();
         binder.setBean(current);
         clearValidationState();
-        refreshRegistrationOptions();
 
         boolean isExisting = current.getAgentTin() != null && !current.getAgentTin().isBlank()
                 && repository.existsById(current.getAgentTin());

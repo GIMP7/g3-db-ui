@@ -153,9 +153,10 @@ class IdInformationView extends VerticalLayout {
 
         idEffective.setWidthFull();
         idEffective.setRequired(true);
+        setDateFormat(idEffective, "Format: DD-MM-YYYY");
 
         idExpiry.setWidthFull();
-        idExpiry.setHelperText("Optional — leave blank for IDs with no expiry");
+        setDateFormat(idExpiry, "Optional, format: DD-MM-YYYY");
 
         registrationId.setWidthFull();
         registrationId.setRequired(true);
@@ -192,6 +193,13 @@ class IdInformationView extends VerticalLayout {
         searchField.setValueChangeMode(ValueChangeMode.LAZY);
         searchField.setWidthFull();
         searchField.addValueChangeListener(event -> refreshGrid());
+    }
+
+    private void setDateFormat(DatePicker picker, String helperText) {
+        var i18n = new DatePicker.DatePickerI18n();
+        i18n.setDateFormat("dd-MM-yyyy");
+        picker.setI18n(i18n);
+        picker.setHelperText(helperText);
     }
 
     private void refreshRegistrationOptions() {
@@ -233,9 +241,9 @@ class IdInformationView extends VerticalLayout {
 
     private void edit(IdInformation entity) {
         current = entity == null ? new IdInformation() : entity;
+        refreshRegistrationOptions();
         binder.setBean(current);
         clearValidationState();
-        refreshRegistrationOptions();
 
         boolean isExisting = current.getIdNumber() != null && !current.getIdNumber().isBlank()
                 && repository.existsById(current.getIdNumber());

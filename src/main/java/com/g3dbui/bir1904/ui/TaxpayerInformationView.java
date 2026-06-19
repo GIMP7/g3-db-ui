@@ -172,11 +172,11 @@ class TaxpayerInformationView extends VerticalLayout {
 
         philsysNumber.setWidthFull();
         philsysNumber.setMaxLength(19);
-        philsysNumber.setHelperText("Optional — PhilSys card ID");
+        philsysNumber.setHelperText("Optional, e.g. 1234-5678-9012-3456");
 
         foreignTin.setWidthFull();
         foreignTin.setMaxLength(20);
-        foreignTin.setHelperText("Optional — foreign applicants only");
+        foreignTin.setHelperText("Optional, foreign applicants only");
 
         residence.setWidthFull();
         residence.setMaxLength(150);
@@ -193,6 +193,7 @@ class TaxpayerInformationView extends VerticalLayout {
 
         birthDate.setWidthFull();
         birthDate.setRequired(true);
+        setDateFormat(birthDate, "Format: DD-MM-YYYY");
 
         birthPlace.setWidthFull();
         birthPlace.setRequired(true);
@@ -207,7 +208,7 @@ class TaxpayerInformationView extends VerticalLayout {
         foreignAddress.setHelperText("Optional");
 
         arrivalDate.setWidthFull();
-        arrivalDate.setHelperText("Optional — foreign applicants only");
+        setDateFormat(arrivalDate, "Optional, format: DD-MM-YYYY");
 
         gender.setWidthFull();
         gender.setRequired(true);
@@ -228,18 +229,22 @@ class TaxpayerInformationView extends VerticalLayout {
         contactNo.setWidthFull();
         contactNo.setRequired(true);
         contactNo.setMaxLength(15);
+        contactNo.setHelperText("Max 15 characters, e.g. 09171234567");
 
         email.setWidthFull();
         email.setRequired(true);
         email.setMaxLength(40);
+        email.setHelperText("Example: name@example.com");
 
         motherName.setWidthFull();
         motherName.setRequired(true);
         motherName.setMaxLength(70);
+        motherName.setHelperText("Last, First Middle format");
 
         fatherName.setWidthFull();
         fatherName.setRequired(true);
         fatherName.setMaxLength(70);
+        fatherName.setHelperText("Last, First Middle format");
     }
 
     private void configureBindings() {
@@ -328,6 +333,13 @@ class TaxpayerInformationView extends VerticalLayout {
         searchField.addValueChangeListener(event -> refreshGrid());
     }
 
+    private void setDateFormat(DatePicker picker, String helperText) {
+        var i18n = new DatePicker.DatePickerI18n();
+        i18n.setDateFormat("dd-MM-yyyy");
+        picker.setI18n(i18n);
+        picker.setHelperText(helperText);
+    }
+
     private void refreshRegistrationOptions() {
         List<String> ids = registrationDetailsRepository.findAll(Sort.by("registrationId"))
                 .stream().map(RegistrationDetails::getRegistrationId).toList();
@@ -398,9 +410,9 @@ class TaxpayerInformationView extends VerticalLayout {
 
     private void edit(TaxpayerInformation entity) {
         current = entity == null ? new TaxpayerInformation() : entity;
+        refreshRegistrationOptions();
         binder.setBean(current);
         clearValidationState();
-        refreshRegistrationOptions();
 
         boolean isExisting = current.getRegistrationId() != null && !current.getRegistrationId().isBlank()
                 && repository.existsById(current.getRegistrationId());
